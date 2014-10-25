@@ -7,7 +7,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(here, 'README.rst'), 'r') as fp:
     readme = fp.read()
 
-with open(os.path.join(here, 'requirements'), 'r') as fp:
+with open(os.path.join(here, 'requirements.txt'), 'r') as fp:
     install_requires = filter(None, fp.readline())
 
 with open(os.path.join(here, 'VERSION'), 'r') as fp:
