@@ -4,10 +4,13 @@ import pkg_resources
 from twisted.web.resource import Resource
 from twisted.web.static import File
 from twisted.web.server import NOT_DONE_YET
+from twisted.internet import reactor
 from twisted.web.util import Redirect
 
 
 subscribers = set([])
+
+MAX_WAIT = 50
 
 
 class SSEResource(Resource):
@@ -33,6 +36,9 @@ class SSEResource(Resource):
             'message': message,
         },)))
 
+    def close(self, request):
+        request.finish()
+
     def render_GET(self, request):
         self.subscribe(request)
         request.notifyFinish().addBoth(lambda _: self.unsubscribe(request))
@@ -41,6 +47,7 @@ class SSEResource(Resource):
         request.setHeader("Access-Control-Allow-Origin", "*")
         request.write(' ' * 2048)  # Get some initial data flowing
         request.write('\n\n')
+        reactor.callLater(MAX_WAIT, self.close, request)
         return NOT_DONE_YET
 
     def render_POST(self, request):
