@@ -37,8 +37,10 @@ class SSEResource(Resource):
         },)))
 
     def close(self, request):
-        if not request.finished:
+        try:
             request.finish()
+        except RuntimeError:
+            pass
 
     def render_GET(self, request):
         self.subscribe(request)
