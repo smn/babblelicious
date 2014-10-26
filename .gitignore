@@ -1,2 +1,5 @@
 /ve/
 *.egg-info
+*.log
+*.pid
+*.pyc
