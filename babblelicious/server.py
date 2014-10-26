@@ -10,7 +10,7 @@ from twisted.web.util import Redirect
 
 subscribers = set([])
 
-MAX_WAIT = 50
+MAX_WAIT = 25
 
 
 class SSEResource(Resource):
