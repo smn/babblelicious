@@ -1,1 +1,1 @@
-web: twistd -n web --class=babblelicous.Server --port=$PORT
+web: twistd -n web --class=babblelicious.Server --port=$PORT
