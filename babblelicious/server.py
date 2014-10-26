@@ -37,7 +37,8 @@ class SSEResource(Resource):
         },)))
 
     def close(self, request):
-        request.finish()
+        if not request.finished:
+            request.finish()
 
     def render_GET(self, request):
         self.subscribe(request)
