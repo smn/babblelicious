@@ -1,7 +1,6 @@
 # -*- test-case-name-: babblicious.tests.test_server -*-
 
 import json
-import time
 import pkg_resources
 
 from twisted.web.resource import Resource
@@ -14,9 +13,12 @@ from twisted.web.util import Redirect
 subscribers = set([])
 
 MAX_WAIT = 25
+INITIAL_BUFFER = ' ' * 2048
 
 
-class SSEResource(Resource):
+class EventSourceResource(Resource):
+
+    clock = reactor
 
     def __init__(self, subscribers, *args, **kwargs):
         Resource.__init__(self, *args, **kwargs)
@@ -34,16 +36,20 @@ class SSEResource(Resource):
             self.write(subscriber, user, message)
 
     def write(self, request, user, message):
-        request.write("id: %f\n" % (time.time(),))
-        request.write("data: %s\n\n" % (json.dumps({
-            'user': user,
-            'message': message,
-        },)))
+        data_obj = [
+            ("id", self.clock.seconds()),
+            ("data", json.dumps({
+                'user': user,
+                'message': message,
+            }))
+        ]
+        data_str = '\n'.join(['%s: %s' % kv for kv in data_obj])
+        request.write('%s\n\n' % (data_str,))
 
     def close(self, request):
         try:
             request.finish()
-        except RuntimeError:
+        except RuntimeError:  # pragma: no cover
             pass
 
     def render_GET(self, request):
@@ -52,9 +58,9 @@ class SSEResource(Resource):
         request.setHeader("Content-Type", "text/event-stream")
         request.setHeader("Cache-Control", "no-cache")
         request.setHeader("Access-Control-Allow-Origin", "*")
-        request.write(' ' * 2048)  # Get some initial data flowing
+        request.write(INITIAL_BUFFER)  # Get some initial data flowing
         request.write('\n\n')
-        reactor.callLater(MAX_WAIT, self.close, request)
+        self.clock.callLater(MAX_WAIT, self.close, request)
         return NOT_DONE_YET
 
     def render_POST(self, request):
@@ -70,4 +76,4 @@ class Server(Resource):
         self.putChild('', Redirect('static/index.html'))
         self.putChild('static', File(
             pkg_resources.resource_filename('babblelicious', 'static')))
-        self.putChild('resource', SSEResource(subscribers))
+        self.putChild('resource', EventSourceResource(subscribers))
