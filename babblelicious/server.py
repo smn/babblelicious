@@ -2,6 +2,7 @@
 
 import json
 import pkg_resources
+from collections import deque
 
 from twisted.web.resource import Resource
 from twisted.web.static import File
@@ -14,6 +15,27 @@ subscribers = set([])
 
 MAX_WAIT = 25
 INITIAL_BUFFER = ' ' * 2048
+
+
+class TimestampQueue(object):
+
+    clock = reactor
+
+    def __init__(self, maxlen):
+        self.queue = deque(maxlen=maxlen)
+
+    def append(self, user, message, timestamp=None):
+        self.queue.append((
+            timestamp or self.clock.seconds(), {
+                'user': user,
+                'message': message,
+            }))
+
+    def __iter__(self):
+        return iter(self.queue)
+
+    def since(self, timestamp):
+        return filter(lambda (ts, data): ts > timestamp, self.queue)
 
 
 class EventSourceResource(Resource):

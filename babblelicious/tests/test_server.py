@@ -1,13 +1,15 @@
 import json
 import pkg_resources
+import time
 
 from twisted.internet.task import Clock
 from twisted.trial.unittest import TestCase
-from twisted.web.server import NOT_DONE_YET, Site, Request
-from twisted.web.test.test_web import DummyRequest, DummyChannel
+from twisted.web.server import NOT_DONE_YET, Site
+from twisted.web.test.test_web import DummyRequest
 
 from babblelicious.server import (
-    Server, EventSourceResource, INITIAL_BUFFER, MAX_WAIT)
+    Server, EventSourceResource, TimestampQueue,
+    INITIAL_BUFFER, MAX_WAIT)
 
 
 class TestEventSourceResource(TestCase):
@@ -102,3 +104,21 @@ class TestEventSourceResource(TestCase):
         self.assertEqual(
             static.path,
             pkg_resources.resource_filename('babblelicious', 'static'))
+
+    def test_timestamp_queue(self):
+        tsq = TimestampQueue(5)
+        start = time.time() - 5
+        for i in range(10):
+            tsq.append(
+                'user %i' % (i,),
+                'message %s' % (i),
+                timestamp=start + i)
+
+        self.assertEqual([], tsq.since(start + 9))
+        [found] = tsq.since(start + 8)
+        timestamp, data = found
+        self.assertEqual(timestamp, start + 9)
+        self.assertEqual(data, {
+            'user': 'user 9',
+            'message': 'message 9',
+        })
