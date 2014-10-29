@@ -17,25 +17,19 @@ MAX_WAIT = 25
 INITIAL_BUFFER = ' ' * 2048
 
 
-class TimestampQueue(object):
+class TimestampQueue(deque):
 
     clock = reactor
 
-    def __init__(self, maxlen):
-        self.queue = deque(maxlen=maxlen)
-
     def append(self, user, message, timestamp=None):
-        self.queue.append((
+        super(TimestampQueue, self).append((
             timestamp or self.clock.seconds(), {
                 'user': user,
                 'message': message,
             }))
 
-    def __iter__(self):
-        return iter(self.queue)
-
     def since(self, timestamp):
-        return filter(lambda (ts, data): ts > timestamp, self.queue)
+        return filter(lambda (ts, data): ts > timestamp, self)
 
 
 class EventSourceResource(Resource):

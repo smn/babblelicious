@@ -106,7 +106,7 @@ class TestEventSourceResource(TestCase):
             pkg_resources.resource_filename('babblelicious', 'static'))
 
     def test_timestamp_queue(self):
-        tsq = TimestampQueue(5)
+        tsq = TimestampQueue([], 5)
         start = time.time() - 5
         for i in range(10):
             tsq.append(
@@ -122,3 +122,4 @@ class TestEventSourceResource(TestCase):
             'user': 'user 9',
             'message': 'message 9',
         })
+        self.assertEqual(len(tsq), 5)
