@@ -1,4 +1,5 @@
 import json
+import time
 import pkg_resources
 
 from twisted.web.resource import Resource
@@ -31,6 +32,7 @@ class SSEResource(Resource):
             self.write(subscriber, user, message)
 
     def write(self, request, user, message):
+        request.write("id: %f\n" % (time.time(),))
         request.write("data: %s\n\n" % (json.dumps({
             'user': user,
             'message': message,
