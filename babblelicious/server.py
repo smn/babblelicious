@@ -1,3 +1,5 @@
+# -*- test-case-name-: babblicious.tests.test_server -*-
+
 import json
 import time
 import pkg_resources
