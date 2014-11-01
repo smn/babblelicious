@@ -1,13 +1,14 @@
 # -*- test-case-name-: babblicious.tests.test_server -*-
 
 import json
-import pkg_resources
 
 from twisted.web.resource import Resource
-from twisted.web.static import File
 from twisted.web.server import NOT_DONE_YET
 from twisted.internet import reactor
 from twisted.web.util import Redirect
+
+from babblelicious.client import Client
+from babblelicious.storage import InMemoryStore
 
 
 subscribers = set([])
@@ -73,7 +74,10 @@ class EventSourceResource(Resource):
 class Server(Resource):
     def __init__(self, *args, **kwargs):
         Resource.__init__(self, *args, **kwargs)
-        self.putChild('', Redirect('static/index.html'))
-        self.putChild('static', File(
-            pkg_resources.resource_filename('babblelicious', 'static')))
-        self.putChild('resource', EventSourceResource(subscribers))
+        self.putChild('event_source', EventSourceResource(subscribers))
+        self.putChild('', Redirect('client/'))
+
+        storage = InMemoryStore(50)
+        client = Client(storage, root_path='/client')
+
+        self.putChild('client', client.resource())

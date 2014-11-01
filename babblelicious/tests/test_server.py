@@ -3,11 +3,12 @@ import pkg_resources
 
 from twisted.internet.task import Clock
 from twisted.trial.unittest import TestCase
-from twisted.web.server import NOT_DONE_YET, Site, Request
-from twisted.web.test.test_web import DummyRequest, DummyChannel
+from twisted.web.server import NOT_DONE_YET, Site
+from twisted.web.test.test_web import DummyRequest
 
 from babblelicious.server import (
-    Server, EventSourceResource, INITIAL_BUFFER, MAX_WAIT)
+    Server, EventSourceResource,
+    INITIAL_BUFFER, MAX_WAIT)
 
 
 class TestEventSourceResource(TestCase):
@@ -97,8 +98,4 @@ class TestEventSourceResource(TestCase):
     def test_server(self):
         site = Site(Server())
         redirect = site.getResourceFor(self.mk_request('GET', ''))
-        self.assertEqual(redirect.url, 'static/index.html')
-        static = site.getResourceFor(self.mk_request('GET', 'static'))
-        self.assertEqual(
-            static.path,
-            pkg_resources.resource_filename('babblelicious', 'static'))
+        self.assertEqual(redirect.url, 'client/')
