@@ -14,13 +14,11 @@ from babblelicious.storage import InMemoryStore
 class TestEventSourceResource(TestCase):
 
     def setUp(self):
-        self.subscribers = set()
         self.storage = InMemoryStore(20)
 
-    def mk_resource(self, subscribers=None, storage=None):
-        subscribers = subscribers or self.subscribers
+    def mk_resource(self, storage=None):
         storage = storage or self.storage
-        resource = EventSourceResource(subscribers, storage)
+        resource = EventSourceResource(storage)
         resource.clock = Clock()
         return resource
 
@@ -53,15 +51,15 @@ class TestEventSourceResource(TestCase):
         request = self.mk_request()
         resource = self.mk_resource()
         resource.render(request)
-        self.assertTrue(request in self.subscribers)
+        self.assertTrue(request in resource.subscribers)
 
     def test_unsubscribe(self):
         request = self.mk_request()
         resource = self.mk_resource()
         resource.render(request)
-        self.assertTrue(request in self.subscribers)
+        self.assertTrue(request in resource.subscribers)
         request.finish()
-        self.assertFalse(request in self.subscribers)
+        self.assertFalse(request in resource.subscribers)
 
     def test_broadcast(self):
         get_request = self.mk_request()

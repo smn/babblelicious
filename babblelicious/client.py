@@ -1,3 +1,4 @@
+# -*- test-case-name: babblelicious.tests.test_client -*-
 import pkg_resources
 
 from jinja2 import Environment, PackageLoader

@@ -52,7 +52,8 @@
     {% for timestamp, entry in storage %}
     <tr>
         <th>{{entry.user}}</th>
-        <td>{{entry.message}}</th>
+        <td>{{entry.message}}</td>
+        <td>{{timestamp}}</td>
     </tr>
     {% endfor %}
     </table>

@@ -11,9 +11,8 @@ from babblelicious.client import Client
 from babblelicious.storage import InMemoryStore
 
 
-subscribers = set([])
-
 MAX_WAIT = 25
+BACKLOG_SIZE = 25
 INITIAL_BUFFER = ' ' * 2048
 
 
@@ -21,10 +20,10 @@ class EventSourceResource(Resource):
 
     clock = reactor
 
-    def __init__(self, subscribers, storage, *args, **kwargs):
+    def __init__(self, storage, *args, **kwargs):
         Resource.__init__(self, *args, **kwargs)
-        self.subscribers = subscribers
         self.storage = storage
+        self.subscribers = set()
 
     def subscribe(self, request):
         self.subscribers.add(request)
@@ -79,9 +78,9 @@ class Server(Resource):
 
         self.putChild('', Redirect('client/'))
 
-        storage = InMemoryStore(50)
+        storage = InMemoryStore(BACKLOG_SIZE)
         client = Client(storage, root_path='/client')
 
         self.putChild(
-            'event_source', EventSourceResource(subscribers, storage))
+            'event_source', EventSourceResource(storage))
         self.putChild('client', client.resource())
