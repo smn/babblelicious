@@ -21,9 +21,10 @@ class EventSourceResource(Resource):
 
     clock = reactor
 
-    def __init__(self, subscribers, *args, **kwargs):
+    def __init__(self, subscribers, storage, *args, **kwargs):
         Resource.__init__(self, *args, **kwargs)
         self.subscribers = subscribers
+        self.storage = storage
 
     def subscribe(self, request):
         self.subscribers.add(request)
@@ -33,6 +34,7 @@ class EventSourceResource(Resource):
             self.subscribers.remove(request)
 
     def broadcast(self, user, message):
+        self.storage.append(user, message, timestamp=self.clock.seconds())
         for subscriber in self.subscribers:
             self.write(subscriber, user, message)
 
@@ -74,10 +76,12 @@ class EventSourceResource(Resource):
 class Server(Resource):
     def __init__(self, *args, **kwargs):
         Resource.__init__(self, *args, **kwargs)
-        self.putChild('event_source', EventSourceResource(subscribers))
+
         self.putChild('', Redirect('client/'))
 
         storage = InMemoryStore(50)
         client = Client(storage, root_path='/client')
 
+        self.putChild(
+            'event_source', EventSourceResource(subscribers, storage))
         self.putChild('client', client.resource())

@@ -1,5 +1,4 @@
 import json
-import pkg_resources
 
 from twisted.internet.task import Clock
 from twisted.trial.unittest import TestCase
@@ -9,15 +8,19 @@ from twisted.web.test.test_web import DummyRequest
 from babblelicious.server import (
     Server, EventSourceResource,
     INITIAL_BUFFER, MAX_WAIT)
+from babblelicious.storage import InMemoryStore
 
 
 class TestEventSourceResource(TestCase):
 
     def setUp(self):
         self.subscribers = set()
+        self.storage = InMemoryStore(20)
 
-    def mk_resource(self, subscribers=None):
-        resource = EventSourceResource(subscribers or self.subscribers)
+    def mk_resource(self, subscribers=None, storage=None):
+        subscribers = subscribers or self.subscribers
+        storage = storage or self.storage
+        resource = EventSourceResource(subscribers, storage)
         resource.clock = Clock()
         return resource
 
@@ -99,3 +102,17 @@ class TestEventSourceResource(TestCase):
         site = Site(Server())
         redirect = site.getResourceFor(self.mk_request('GET', ''))
         self.assertEqual(redirect.url, 'client/')
+
+    def test_write_to_backlog(self):
+        get_request = self.mk_request()
+        resource = self.mk_resource()
+        resource.render(get_request)
+
+        post_request = self.mk_request()
+        post_request.method = 'POST'
+        post_request.args['user'] = ['foo']
+        post_request.args['message'] = ['bar']
+        resource.render(post_request)
+        [entry] = self.storage
+        timestamp, data = entry
+        self.assertEqual(data, {'user': 'foo', 'message': 'bar'})
