@@ -33,17 +33,21 @@ class EventSourceResource(Resource):
             self.subscribers.remove(request)
 
     def broadcast(self, user, message):
-        self.storage.append(user, message, timestamp=self.clock.seconds())
+        now = self.clock.seconds()
+        data = {
+            'user': user,
+            'message': message,
+            'time': now,
+        }
+        self.storage.append(data, timestamp=now)
         for subscriber in self.subscribers:
-            self.write(subscriber, user, message)
+            self.write(subscriber, data)
 
-    def write(self, request, user, message):
+    def write(self, request, data):
+        now = self.clock.seconds()
         data_obj = [
-            ("id", self.clock.seconds()),
-            ("data", json.dumps({
-                'user': user,
-                'message': message,
-            }))
+            ("id", now),
+            ("data", json.dumps(data)),
         ]
         data_str = '\n'.join(['%s: %s' % kv for kv in data_obj])
         request.write('%s\n\n' % (data_str,))

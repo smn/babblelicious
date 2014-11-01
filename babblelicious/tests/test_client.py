@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 
 from twisted.trial.unittest import TestCase
 
@@ -17,11 +18,16 @@ class TestClient(TestCase):
     def test_index(self):
         client = self.mk_client()
         now = time.time()
-        client.storage.append(
-            user='foo', message='bar', timestamp=now)
+        client.storage.append({
+            'user': 'foo',
+            'message': 'bar',
+            'time': now,
+        }, timestamp=now)
         request = requestMock("/", "GET")
         client.resource().render(request)
         doc = request.getWrittenData()
         self.assertTrue('<th>foo</th>' in doc)
         self.assertTrue('<td>bar</td>' in doc)
-        self.assertTrue('<td>{0}</td>'.format(now) in doc)
+        timestamp = '<td>{0}</td>'.format(
+            datetime.fromtimestamp(now).strftime('%H:%M / %d-%m-%Y'),)
+        self.assertTrue(timestamp in doc)

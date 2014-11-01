@@ -1,5 +1,6 @@
 # -*- test-case-name: babblelicious.tests.test_client -*-
 import pkg_resources
+from datetime import datetime
 
 from jinja2 import Environment, PackageLoader
 from klein import Klein
@@ -16,6 +17,10 @@ class Client(object):
         self.root_path = root_path
         self.env = Environment(
             loader=PackageLoader('babblelicious', 'templates'))
+        self.env.filters['format_timestamp'] = self.filter_format_timestamp
+
+    def filter_format_timestamp(self, value, format):
+        return datetime.fromtimestamp(value).strftime(format)
 
     def resource(self):
         return self.app.resource()

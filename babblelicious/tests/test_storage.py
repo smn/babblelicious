@@ -11,10 +11,11 @@ class TestStorage(TestCase):
         tsq = InMemoryStore(5)
         start = time.time() - 5
         for i in range(10):
-            tsq.append(
-                'user %i' % (i,),
-                'message %s' % (i),
-                timestamp=start + i)
+            tsq.append({
+                'user': 'user %i' % (i,),
+                'message': 'message %s' % (i),
+                'time': start + i,
+            }, timestamp=start + i)
 
         self.assertEqual([], tsq.since(start + 9))
         [found] = tsq.since(start + 8)
@@ -23,5 +24,6 @@ class TestStorage(TestCase):
         self.assertEqual(data, {
             'user': 'user 9',
             'message': 'message 9',
+            'time': start + 9,
         })
         self.assertEqual(len(tsq), 5)

@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="{{STATIC_URL}}/css/bootstrap.min.css">
     <script src="{{STATIC_URL}}/js/jquery.min.js"></script>
     <script src="{{STATIC_URL}}/js/bootstrap.min.js"></script>
+    <script src="{{STATIC_URL}}/js/moment.min.js"></script>
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -23,7 +24,13 @@
         es.addEventListener("message", function (event) {
           if(event.data) {
             data = JSON.parse(event.data);
-            $('#chats').append('<tr><th>' + data.user + '</th><td>' + data.message +'</td></tr>');
+            $('#chats').append([
+              '<tr>',
+                '<th>' + data.user + '</th>',
+                '<td>' + data.message + '</td>',
+                '<td>' + moment(data.time, 'X.SSSSS').format('HH:mm / DD-MM-YYYY') + '</td>',
+              '</tr>'
+            ].join('\n'));
           }
         });
 
@@ -49,11 +56,11 @@
   <div class="container-fluid">
     <h2>Babblelicious</h2>
     <table id="chats" class="table table-striped">
-    {% for timestamp, entry in storage %}
+    {% for order, entry in storage %}
     <tr>
         <th>{{entry.user}}</th>
         <td>{{entry.message}}</td>
-        <td>{{timestamp}}</td>
+        <td>{{entry.time|format_timestamp("%H:%M / %d-%m-%Y")}}</td>
     </tr>
     {% endfor %}
     </table>

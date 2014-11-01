@@ -11,12 +11,9 @@ class InMemoryStore(deque):
     def __init__(self, maxlen):
         super(InMemoryStore, self).__init__([], maxlen)
 
-    def append(self, user, message, timestamp=None):
+    def append(self, data, timestamp=None):
         super(InMemoryStore, self).append((
-            timestamp or self.clock.seconds(), {
-                'user': user,
-                'message': message,
-            }))
+            timestamp or self.clock.seconds(), data))
 
     def since(self, timestamp):
         return filter(lambda (ts, data): ts > timestamp, self)

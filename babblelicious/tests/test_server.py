@@ -79,6 +79,7 @@ class TestEventSourceResource(TestCase):
             'data: %s' % json.dumps({
                 'message': 'bar',
                 'user': 'foo',
+                'time': 0.0,
             }) +
             '\n\n')
 
@@ -113,4 +114,8 @@ class TestEventSourceResource(TestCase):
         resource.render(post_request)
         [entry] = self.storage
         timestamp, data = entry
-        self.assertEqual(data, {'user': 'foo', 'message': 'bar'})
+        self.assertEqual(data, {
+            'user': 'foo',
+            'message': 'bar',
+            'time': 0.0,
+        })
