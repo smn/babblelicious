@@ -10,8 +10,8 @@ class Client(object):
 
     app = Klein()
 
-    def __init__(self, subscribers, root_path=''):
-        self.subscribers = subscribers
+    def __init__(self, storage, root_path=''):
+        self.storage = storage
         self.root_path = root_path
         self.env = Environment(
             loader=PackageLoader('babblelicious', 'templates'))
@@ -23,7 +23,7 @@ class Client(object):
     def index(self, request):
         template = self.env.get_template('index.html')
         return template.render(
-            subscribers=self.subscribers,
+            storage=self.storage,
             STATIC_URL='{0}/static'.format(self.root_path))
 
     @app.route('/static/', branch=True)

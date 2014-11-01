@@ -1,35 +1,20 @@
 # -*- test-case-name-: babblicious.tests.test_server -*-
 
 import json
-from collections import deque
 
 from twisted.web.resource import Resource
 from twisted.web.server import NOT_DONE_YET
 from twisted.internet import reactor
 from twisted.web.util import Redirect
-from twisted.web.wsgi import WSGIResource
+
 from babblelicious.client import Client
+from babblelicious.storage import InMemoryStore
 
 
 subscribers = set([])
 
 MAX_WAIT = 25
 INITIAL_BUFFER = ' ' * 2048
-
-
-class TimestampQueue(deque):
-
-    clock = reactor
-
-    def append(self, user, message, timestamp=None):
-        super(TimestampQueue, self).append((
-            timestamp or self.clock.seconds(), {
-                'user': user,
-                'message': message,
-            }))
-
-    def since(self, timestamp):
-        return filter(lambda (ts, data): ts > timestamp, self)
 
 
 class EventSourceResource(Resource):
@@ -91,5 +76,8 @@ class Server(Resource):
         Resource.__init__(self, *args, **kwargs)
         self.putChild('event_source', EventSourceResource(subscribers))
         self.putChild('', Redirect('client/'))
-        self.putChild(
-            'client', Client(subscribers, root_path='/client').resource())
+
+        storage = InMemoryStore(50)
+        client = Client(storage, root_path='/client')
+
+        self.putChild('client', client.resource())
