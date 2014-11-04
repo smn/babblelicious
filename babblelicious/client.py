@@ -3,9 +3,11 @@ import pkg_resources
 from datetime import datetime
 
 from jinja2 import Environment, PackageLoader
+
 from klein import Klein
 
 from twisted.web.static import File
+from twisted.internet.defer import succeed
 
 
 class Client(object):
@@ -17,6 +19,10 @@ class Client(object):
         self.root_path = root_path
         self.env = Environment(
             loader=PackageLoader('babblelicious', 'templates'))
+        self.global_context = {
+            'STATIC_URL': self.url('/static'),
+            'storage': self.storage
+        }
         self.env.filters['format_timestamp'] = self.filter_format_timestamp
 
     def filter_format_timestamp(self, value, format):
@@ -25,12 +31,19 @@ class Client(object):
     def resource(self):
         return self.app.resource()
 
+    def url(self, path):
+        return '{0}{1}'.format(self.root_path, path)
+
     @app.route('/')
     def index(self, request):
-        template = self.env.get_template('index.html')
-        return template.render(
-            storage=self.storage,
-            STATIC_URL='{0}/static'.format(self.root_path))
+        request.redirect(self.url('/room/default/'))
+        return succeed(None)
+
+    @app.route('/room/<string:name>/')
+    def room(self, request, name):
+        template = self.env.get_template(
+            'room.html', globals=self.global_context)
+        return template.render(name=name)
 
     @app.route('/static/', branch=True)
     def static(self, request):
