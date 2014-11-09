@@ -76,11 +76,39 @@ class EventSourceResource(Resource):
         return ''
 
 
+class FBAccessTokenResource(Resource):
+
+    def __init__(self, app_id, app_secret)
+
+
+class AuthenticationResource(Resource):
+
+    def __init__(self, app_id, app_secret, url, *args, **kwargs):
+        Resource.__init__(self, *args, **kwargs)
+        self.app_id = app_id
+        self.url = url
+
+    def getChild(self, name, request):
+        if name:
+            return {
+                'access': FBAccessTokenResource(self.app_id),
+            }[name]
+        return self.render_GET(request)
+
+    def render_GET(self, request):
+        request.redirect(
+            'https://www.facebook.com/dialog/oauth'
+            '?client_id={0}'
+            '&redirect_uri={1}'.format(self.app_id, self.url))
+        return ''
+
+
 class Server(Resource):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, app_id, url, *args, **kwargs):
         Resource.__init__(self, *args, **kwargs)
 
         self.putChild('', Redirect('client/'))
+        self.putChild('auth', AuthenticationResource(app_id, url))
 
         storage = InMemoryStore(BACKLOG_SIZE)
         client = Client(storage, root_path='/client')

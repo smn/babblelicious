@@ -35,4 +35,9 @@ setup(
         'Topic :: System :: Networking',
         'Framework :: Twisted',
     ],
+    entry_points={
+        'console_scripts': [
+            'babblelicious = babblelicious.main:main',
+        ]
+    }
 )
