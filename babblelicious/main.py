@@ -16,12 +16,15 @@ class Options(usage.Options):
          'The URL this service is available on (used for auth callbacks).'],
         ['fb-app-id', 'a', None,
          'The Facebook app-id (used for auth callbacks).'],
+        ['fb-app-secret', 's', None,
+         'The Facebook app-secret (used for auth callbacks).'],
     ]
 
     def postOptions(self):
-        if not self['fb-app-id']:
+        print dict(self)
+        if not all([self['fb-app-id'], self['fb-app-secret']]):
             raise usage.UsageError(
-                "Please specify FB app-id for auth callbacks.")
+                "Please specify FB app-id and app-secret for auth callbacks.")
 
 
 def main():
@@ -39,6 +42,10 @@ def main():
     endpoint_str = options['endpoint']
     endpoint = serverFromString(reactor, endpoint_str)
     endpoint.listen(
-        Site(Server(options['fb-app-id'], options['fb-auth-url'])))
+        Site(
+            Server(
+                options['fb-app-id'],
+                options['fb-app-secret'],
+                options['fb-auth-url'])))
 
     reactor.run()

@@ -7,6 +7,8 @@ from twisted.web.server import NOT_DONE_YET
 from twisted.internet import reactor
 from twisted.web.util import Redirect
 
+import treq
+
 from babblelicious.client import Client
 from babblelicious.storage import InMemoryStore
 
@@ -78,20 +80,55 @@ class EventSourceResource(Resource):
 
 class FBAccessTokenResource(Resource):
 
-    def __init__(self, app_id, app_secret)
+    def __init__(self, app_id, app_secret, redirect_uri):
+        self.app_id = app_id
+        self.app_secret = app_secret
+        self.redirect_uri = redirect_uri
+
+    def render_GET(self, request):
+        [code] = request.args['code']
+        d = treq.get((
+            'https://graph.facebook.com/oauth/access_token'
+            '?client_id={app_id}'
+            '&redirect_uri={redirect_uri}'
+            '&client_secret={app_secret}'
+            '&code={code}').format(
+                app_id=self.app_id,
+                app_secret=self.app_secret,
+                redirect_uri=self.redirect_uri,
+                code=code))
+
+        def done(response):
+            return treq.content(response)
+
+        def got_body(body, request):
+            print 'body!!', body
+            request.redirect('/')
+            request.finish()
+            return ''
+
+        d.addCallback(done)
+        d.addCallback(got_body, request)
+        return NOT_DONE_YET
 
 
 class AuthenticationResource(Resource):
 
-    def __init__(self, app_id, app_secret, url, *args, **kwargs):
+    def __init__(self, app_id, app_secret, redirect_uri, *args, **kwargs):
         Resource.__init__(self, *args, **kwargs)
         self.app_id = app_id
-        self.url = url
+        self.app_secret = app_secret
+        self.redirect_uri = redirect_uri
+        self.access_resource = FBAccessTokenResource(
+            app_id, app_secret, redirect_uri)
 
     def getChild(self, name, request):
+        print 'request.prepath', request.prepath
+        print 'request.postpath', request.postpath
+
         if name:
             return {
-                'access': FBAccessTokenResource(self.app_id),
+                'access': self.access_resource,
             }[name]
         return self.render_GET(request)
 
@@ -99,16 +136,20 @@ class AuthenticationResource(Resource):
         request.redirect(
             'https://www.facebook.com/dialog/oauth'
             '?client_id={0}'
-            '&redirect_uri={1}'.format(self.app_id, self.url))
+            '&redirect_uri={1}'
+            '&scope=public_profile,user_friends,email'.format(
+                self.app_id, self.redirect_uri))
         return ''
 
 
 class Server(Resource):
-    def __init__(self, app_id, url, *args, **kwargs):
+    def __init__(self, app_id, app_secret, redirect_uri, *args, **kwargs):
         Resource.__init__(self, *args, **kwargs)
 
         self.putChild('', Redirect('client/'))
-        self.putChild('auth', AuthenticationResource(app_id, url))
+        self.putChild(
+            'auth', AuthenticationResource(
+                app_id, app_secret, '%s/auth/access' % (redirect_uri,)))
 
         storage = InMemoryStore(BACKLOG_SIZE)
         client = Client(storage, root_path='/client')

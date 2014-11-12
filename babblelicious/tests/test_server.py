@@ -98,7 +98,7 @@ class TestEventSourceResource(TestCase):
         self.assertEqual(None, resource.close(request))
 
     def test_server(self):
-        site = Site(Server())
+        site = Site(Server('app_id', 'app_secret', 'http://foo/'))
         redirect = site.getResourceFor(self.mk_request('GET', ''))
         self.assertEqual(redirect.url, 'client/')
 

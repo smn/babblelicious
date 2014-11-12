@@ -4,3 +4,5 @@ coverage==3.7.1
 Jinja2==2.7.3
 klein==0.2.3
 treq==0.2.1
+PyOpenSSL==0.14
+service_identity==14.0.0
