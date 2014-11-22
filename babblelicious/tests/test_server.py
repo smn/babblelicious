@@ -98,7 +98,23 @@ class TestEventSourceResource(TestCase):
         self.assertEqual(None, resource.close(request))
 
     def test_server(self):
-        site = Site(Server('app_id', 'app_secret', 'http://foo/'))
+        site = Site(Server({
+            'authentication': {
+                'backend': 'babblelicious.auth.FacebookAuth',
+                'config': {
+                    'url': 'http://foo/',
+                    'app_id': 'app_id',
+                    'app_secret': 'app_secret',
+                }
+            },
+            'storage': {
+                'backend': 'babblelicious.storage.InMemoryStore',
+                'config': {
+                    'maxlen': 50
+                }
+
+            }
+        }))
         redirect = site.getResourceFor(self.mk_request('GET', ''))
         self.assertEqual(redirect.url, 'client/')
 

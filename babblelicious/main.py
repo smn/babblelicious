@@ -1,4 +1,5 @@
 import sys
+import yaml
 
 from twisted.python import usage, log
 from twisted.internet import reactor
@@ -12,19 +13,8 @@ class Options(usage.Options):
 
     optParameters = [
         ['endpoint', 'e', 'tcp:8081', 'The endpoint to listen on.'],
-        ['fb-auth-url', 'u', 'http://localhost:8081/',
-         'The URL this service is available on (used for auth callbacks).'],
-        ['fb-app-id', 'a', None,
-         'The Facebook app-id (used for auth callbacks).'],
-        ['fb-app-secret', 's', None,
-         'The Facebook app-secret (used for auth callbacks).'],
+        ['config', 'c', 'babblelicious.yaml', 'The config to read.'],
     ]
-
-    def postOptions(self):
-        print dict(self)
-        if not all([self['fb-app-id'], self['fb-app-secret']]):
-            raise usage.UsageError(
-                "Please specify FB app-id and app-secret for auth callbacks.")
 
 
 def main():
@@ -39,13 +29,10 @@ def main():
 
     log.startLogging(sys.stdout)
 
-    endpoint_str = options['endpoint']
-    endpoint = serverFromString(reactor, endpoint_str)
-    endpoint.listen(
-        Site(
-            Server(
-                options['fb-app-id'],
-                options['fb-app-secret'],
-                options['fb-auth-url'])))
+    with open(options['config']) as fp:
+        server_config = yaml.safe_load(fp)
+
+    endpoint = serverFromString(reactor, options['endpoint'])
+    endpoint.listen(Site(Server(server_config)))
 
     reactor.run()
