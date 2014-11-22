@@ -57,13 +57,14 @@ class AuthenticationResource(Resource):
         return self
 
     def render_GET(self, request):
+        redirect_url = '%s/%s/access' % (
+            self.uri, '/'.join(filter(None, request.prepath)))
         request.redirect(
             'https://www.facebook.com/dialog/oauth'
             '?client_id={0}'
             '&redirect_uri={1}'
             '&scope=public_profile,user_friends,email'.format(
-                self.app_id,
-                '%s/%s/access' % (self.uri, '/'.join(request.prepath))))
+                self.app_id, redirect_url))
         return ''
 
 
